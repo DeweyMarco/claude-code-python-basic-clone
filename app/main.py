@@ -11,8 +11,12 @@ load_dotenv()
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
 
+TOOLS = {"read": read}
 
 def call_model(messages, tools):
+    if not API_KEY:
+        raise RuntimeError("OPENROUTER_API_KEY is not set")
+
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
     response = client.chat.completions.create(
         # model="stepfun/step-3.5-flash:free",
@@ -22,61 +26,57 @@ def call_model(messages, tools):
     )
     return response
 
+def read(file_path: str) -> str:
+    with open(file_path, "r") as f:
+        return f.read()
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("-p", required=True)
     args = p.parse_args()
 
-    if not API_KEY:
-        raise RuntimeError("OPENROUTER_API_KEY is not set")
 
-    messages=[{"role": "user", "content": args.p}]
-    tools=[{
-        "type": "function",
-            "function": {
-                "name": "read",
-                "description": "Read and return the contents of a file",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "file_path": {
-                            "type": "string",
-                            "description": "The path to the file to read"
-                        }
-                    },
-                    "required": ["file_path"]
+    while True:
+        messages=[{"role": "user", "content": args.p}]
+        tools=[{
+            "type": "function",
+                "function": {
+                    "name": "read",
+                    "description": "Read and return the contents of a file",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "file_path": {
+                                "type": "string",
+                                "description": "The path to the file to read"
+                            }
+                        },
+                        "required": ["file_path"]
+                    }
                 }
-            }
-        }]
-    chat = call_model(messages, tools)
-
-    if not chat.choices or len(chat.choices) == 0:
-        raise RuntimeError("no choices in response")
-    
-    while (True):
-        if chat.choices[0].message.tool_calls is None:
-            break
-
-        message = {
-            "role": chat.choices[0].message.role,
-            "content": chat.choices[0].message.content,
-            "tool_calls": chat.choices[0].message.tool_calls
-        }
-
-        messages.append(message)
-
-        for tool_call in chat.choices[0].message.tool_calls:
-            if tool_call.function.name == "read":
-                func_args = json.loads(tool_call.function.arguments)
-                file_path = func_args["file_path"]
-                with open(file_path, "r") as f:
-                    content = f.read()
-                    messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": content})
-
+            }]
+        
         chat = call_model(messages, tools)
 
+        if not chat.choices or len(chat.choices) == 0:
+            raise RuntimeError("no choices in response")
+        
+        message = chat.choices[0].message
+        messages.append(message)
 
+        if message.tool_calls:
+            for tool_call in message.tool_calls:
+                fn = tool_call.function
+                function = fn.name
+                args = json.loads(fn.arguments)
+                messages.append(
+                    {"role": "tool", "tool_call_id": tool_call.id, "content": TOOLS[function](**args)}
+                )
+
+        if chat.choices[0].finish_reason == "stop":
+            break
+    
+    print(chat.choices[0].message.content)
 
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
