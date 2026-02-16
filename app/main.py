@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import json
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -44,6 +45,15 @@ def main():
 
     if not chat.choices or len(chat.choices) == 0:
         raise RuntimeError("no choices in response")
+    
+    if chat.choices[0].message.tool_calls:
+        for tool_call in chat.choices[0].message.tool_calls:
+            if tool_call.function.name == "read":
+                func_args = json.loads(tool_call.function.arguments)
+                file_path = func_args["file_path"]
+                with open(file_path, "r") as f:
+                    content = f.read()
+                print(content)
 
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
