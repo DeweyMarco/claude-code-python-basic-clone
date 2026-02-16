@@ -70,9 +70,9 @@ def main():
             for tool_call in message.tool_calls:
                 fn = tool_call.function
                 function = fn.name
-                args = json.loads(fn.arguments)
+                fn_args = json.loads(fn.arguments)
                 messages.append(
-                    {"role": "tool", "tool_call_id": tool_call.id, "content": TOOLS[function](**args)}
+                    {"role": "tool", "tool_call_id": tool_call.id, "content": TOOLS[function](**fn_args)}
                 )
 
         if chat.choices[0].finish_reason == "stop":
