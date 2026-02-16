@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import json
+import subprocess
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -36,7 +37,11 @@ def write(file_path: str, content: str) -> str:
         f.write(content)
     return f"Successfully wrote to {file_path}"   
 
-TOOLS = {"read": read, "write": write}
+def bash(command: str) -> str:
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    return result.stdout
+
+TOOLS = {"read": read, "write": write, "bash": bash}
 
 def main():
     p = argparse.ArgumentParser()
@@ -80,6 +85,24 @@ def main():
                         }
                     },
                     "required": ["file_path", "content"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "bash",
+                "description": "Execute a shell command",
+                "parameters": {
+                    "type": "object",
+                    "required": ["command"],
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "The shell command to execute"
+                        }
+                    },
+                    "required": ["command"]
                 }
             }
         }
