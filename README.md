@@ -1,34 +1,53 @@
-[![progress-banner](https://backend.codecrafters.io/progress/claude-code/1a5e0d36-65a3-4829-82a2-cc3b7d39c1fa)](https://app.codecrafters.io/users/DeweyMarco?r=2qF)
+# Build Your Own Claude Code (Python)
 
-This is a starting point for Python solutions to the
-["Build Your own Claude Code" Challenge](https://codecrafters.io/challenges/claude-code).
+A minimal implementation of an LLM-powered coding assistant, similar to Claude Code.
 
-Claude Code is an AI coding assistant that uses Large Language Models (LLMs) to
-understand code and perform actions through tool calls. In this challenge,
-you'll build your own Claude Code from scratch by implementing an LLM-powered
-coding assistant.
+## Overview
 
-Along the way you'll learn about HTTP RESTful APIs, OpenAI-compatible tool
-calling, agent loop, and how to integrate multiple tools into an AI assistant.
+This project demonstrates how to build an AI coding assistant that can:
+- Read and write files
+- Execute shell commands
+- Use an **agent loop** to iteratively solve tasks
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+## Key Concepts
 
-# Passing the first stage
+### Agent Loop
+The core pattern is an **agent loop** where the LLM repeatedly:
+1. Receives a user prompt and conversation history
+2. Decides whether to call a tool or respond directly
+3. If a tool is called, the result is added to the conversation
+4. Loop continues until the LLM responds without tool calls
 
-The entry point for your `claude-code` implementation is in `app/main.py`. Study
-and uncomment the relevant code, and submit to pass the first stage:
+### Tool Calling
+Tools are functions the LLM can invoke. Each tool has:
+- A **name** and **description** for the LLM to understand its purpose
+- A **JSON schema** defining the expected parameters
+- A **Python function** that executes the actual logic
 
-```sh
-codecrafters submit
+## Project Structure
+
+```
+app/
+  main.py    # Main entry point with agent loop and tool definitions
 ```
 
-# Stage 2 & beyond
+## Setup
 
-Note: This section is for stages 2 and beyond.
+1. Install dependencies with `uv`:
+   ```sh
+   uv sync
+   ```
 
-1. Ensure you have `uv` installed locally.
-2. Run `./your_program.sh` to run your program, which is implemented in
-   `app/main.py`.
-3. Run `codecrafters submit` to submit your solution to CodeCrafters. Test
-   output will be streamed to your terminal.
+2. Set your API key in a `.env` file:
+   ```
+   OPENROUTER_API_KEY=your_key_here
+   ```
+
+3. Run the assistant:
+   ```sh
+   ./your_program.sh -p "Your prompt here"
+   ```
+
+## How It Works
+
+See `app/main.py` for the complete implementation with inline comments explaining each part.
