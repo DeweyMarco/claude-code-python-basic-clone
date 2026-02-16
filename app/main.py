@@ -11,7 +11,7 @@ load_dotenv()
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
 
-TOOLS = {"read": read}
+
 
 def call_model(messages, tools):
     if not API_KEY:
@@ -29,6 +29,8 @@ def call_model(messages, tools):
 def read(file_path: str) -> str:
     with open(file_path, "r") as f:
         return f.read()
+
+TOOLS = {"read": read}
 
 def main():
     p = argparse.ArgumentParser()
