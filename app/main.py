@@ -31,7 +31,7 @@ def main():
     if not API_KEY:
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
-    messages=[{"role": "user", "content": args.p}],
+    messages=[{"role": "user", "content": args.p}]
     tools=[{
         "type": "function",
             "function": {
@@ -55,17 +55,16 @@ def main():
         raise RuntimeError("no choices in response")
     
     while (True):
-        if chat.choices[0].message.tool_calls == None or len(chat.choices[0].message.tool_calls) == 0:
+        if chat.choices[0].message.tool_calls is None:
             break
 
+        message = {
+            "role": chat.choices[0].message.role,
+            "content": chat.choices[0].message.content,
+            "tool_calls": chat.choices[0].message.tool_calls
+        }
 
-
-        mes = [{"role": chat.choices[0].message.role,
-                "content": chat.choices[0].message.content,
-                "tool_calls": chat.choices[0].message.tool_calls
-               }]
-        
-        messages.append(mes)
+        messages.append(message)
 
         for tool_call in chat.choices[0].message.tool_calls:
             if tool_call.function.name == "read":
@@ -73,11 +72,11 @@ def main():
                 file_path = func_args["file_path"]
                 with open(file_path, "r") as f:
                     content = f.read()
-                    messages.append({"role": "tool", "content": content})
+                    messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": content})
 
         chat = call_model(messages, tools)
 
-        
+
 
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
