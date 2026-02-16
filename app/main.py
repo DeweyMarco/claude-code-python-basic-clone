@@ -29,35 +29,64 @@ def call_model(messages, tools):
 def read(file_path: str) -> str:
     with open(file_path, "r") as f:
         return f.read()
+    
+def write(file_path: str, content: str) -> str:
+    os.makedirs(os.path.dirname(file_path), exist_ok=True) 
+    with open(file_path, "w") as f:
+        f.write(content)
+    return f"Successfully wrote to {file_path}"   
 
-TOOLS = {"read": read}
+TOOLS = {"read": read, "write": write}
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("-p", required=True)
     args = p.parse_args()
 
+    messages=[{"role": "user", "content": args.p}]
+    tools=[{
+        "type": "function",
+            "function": {
+                "name": "read",
+                "description": "Read and return the contents of a file",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "file_path": {
+                            "type": "string",
+                            "description": "The path to the file to read"
+                        }
+                    },
+                    "required": ["file_path"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "write",
+                "description": "Write the contents to a file",
+                "parameters": {
+                    "type": "object",
+                    "required": ["file_path", "content"],
+                    "properties": {
+                        "file_path": {
+                            "type": "string",
+                            "description": "The path to the file to read"
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "The content to write to the file"
+                        }
+                    },
+                    "required": ["file_path", "content"]
+                }
+            }
+        }
+    ]
 
     while True:
-        messages=[{"role": "user", "content": args.p}]
-        tools=[{
-            "type": "function",
-                "function": {
-                    "name": "read",
-                    "description": "Read and return the contents of a file",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "file_path": {
-                                "type": "string",
-                                "description": "The path to the file to read"
-                            }
-                        },
-                        "required": ["file_path"]
-                    }
-                }
-            }]
-        
+
         chat = call_model(messages, tools)
 
         if not chat.choices or len(chat.choices) == 0:
